@@ -134,7 +134,7 @@ namespace WebApplication1.Services
         //}
         public async Task<List<Query>> GetQueriesList()
         {
-            return await _queriesToProcessList;
+            return _queriesToProcessList;
         }
         private static List<Query> AdaptQuery(List<QueryEntity> queryEntityList)
         {
