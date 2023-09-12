@@ -1,11 +1,29 @@
+using Microsoft.EntityFrameworkCore;
+using WebApplication1.DBContext;
+using WebApplication1.Interfaces;
+using WebApplication1.Models;
+using WebApplication1.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
+var configuration = builder.Configuration;
 // Add services to the container.
 
-builder.Services.AddControllers();
+//builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddTransient<IQueryService>();
+builder.Services.AddTransient<IUserService>();
+builder.Services.AddTransient<IVisitStatisticsService>();
+
+builder.Services.AddDbContext<AppDbContext>(options => 
+                options.UseSqlite(
+                configuration.GetConnectionString("DefaultConnection"),
+                ef => ef.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+
+builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetService<AppDbContext>());
 
 var app = builder.Build();
 
@@ -21,5 +39,12 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapPost("/report/user_statistics", (QueryParameters queryParameters, IApplicationDbContext db, IQueryService queryService) =>
+{
+
+});
+
+
 
 app.Run();
