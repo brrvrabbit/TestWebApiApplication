@@ -11,7 +11,7 @@ using WebApplication1.DBContext;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20230912103004_InitialMigration")]
+    [Migration("20230912185540_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -42,6 +42,7 @@ namespace WebApplication1.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

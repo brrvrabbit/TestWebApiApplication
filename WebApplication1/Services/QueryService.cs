@@ -119,7 +119,7 @@ namespace WebApplication1.Services
         {
             try
             {
-                var query = _queriesToProcessList.Where(q => q.QueryId == queryId).Single();
+                var query = _queriesToProcessList.Find(q => q.QueryId == queryId);
                 return query;
             }
             catch(Exception ex)

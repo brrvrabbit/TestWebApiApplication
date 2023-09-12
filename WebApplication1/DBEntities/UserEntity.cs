@@ -8,5 +8,6 @@ namespace WebApplication1.DBEntities
         [Key]
         public string Id { get; set; }
         public string Username { get; set; }
+        //public List<VisitStatisticsEntity> VisitStatistics { get; set; } = new();
     }
 }

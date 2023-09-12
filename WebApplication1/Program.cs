@@ -15,9 +15,7 @@ var configuration = builder.Configuration;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddTransient<IQueryService>();
-builder.Services.AddTransient<IUserService>();
-builder.Services.AddTransient<IVisitStatisticsService>();
+
 
 builder.Services.AddDbContext<AppDbContext>(options => 
                 options.UseSqlite(
@@ -25,6 +23,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 ef => ef.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetService<AppDbContext>());
+
+builder.Services.AddTransient<IQueryService, QueryService>();
+builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IVisitStatisticsService, VisitStatisticsService>();
 
 var app = builder.Build();
 
@@ -37,9 +39,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+//app.UseAuthorization();
 
-app.MapControllers();
+//app.MapControllers();
 
 app.MapPost("/report/user_statistics", (QueryParameters queryParameters, IApplicationDbContext db, IQueryService queryService) =>
 {
@@ -59,8 +61,47 @@ app.MapPost("/report/user_statistics", (QueryParameters queryParameters, IApplic
 app.MapGet("/report/info", async (string queryGuid, IQueryService queryService) =>
 {
     var query = await queryService.GetQuery(queryGuid);
-    return Results.Json(query.MakeInfoObject());
+    if(query != null)
+        return Results.Json(query.MakeInfoObject());
+    else return Results.NotFound();
 });
 
+app.MapGet("/users/", async (IUserService userService) =>
+{
+    return await userService.GetUsersAsync();
+});
+
+//app.MapPost("/users/initialize", async (IApplicationDbContext db) =>
+//{
+//    int usersCount = 15,
+//        minVisit = 1,
+//        maxVisit = 100;
+//    Random r = new Random();
+
+//    User user;
+//    for (int i = 0; i < usersCount; i++)
+//    {
+//        user = new()
+//        {
+//            Id = Guid.NewGuid().ToString(),
+//            Username = "user" + r.Next().ToString(),
+//        };
+//        int visitCount = r.Next(1, 100);
+
+//        for (int j = 0; j < visitCount; j++)
+//        {
+//            VisitStatistics visitStatistics = new()
+//            {
+//                UserId = user.Id,
+//                Datetime = DateTime.Now.Subtract(TimeSpan.FromHours(r.Next(24)))
+//            };
+//            db.VisitStatistics.Add(visitStatistics.VisitStatisticsEntity);
+//        }
+        
+//        db.Users.Add(user.UserEntity);
+//        await db.SaveChanges();
+//    }
+//    return Results.Ok();
+//});
 
 app.Run();
