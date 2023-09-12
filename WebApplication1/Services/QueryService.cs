@@ -115,18 +115,26 @@ namespace WebApplication1.Services
             else return null;
         }
         
-        public Query GetQuery(string queryId)
+        public async Task<Query> GetQuery(string queryId)
         {
-            return _queriesToProcessList.Where(q => q.QueryId == queryId).Single();
+            try
+            {
+                var query = _queriesToProcessList.Where(q => q.QueryId == queryId).Single();
+                return query;
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
         }
 
         //public async Task<Query> GetQueryAsync(string queryId)
         //{
         //    return _queriesList.Where(q => q.QueryId == queryId).Single();
         //}
-        public List<Query> GetQueriesList()
+        public async Task<List<Query>> GetQueriesList()
         {
-            return _queriesToProcessList;
+            return await _queriesToProcessList;
         }
         private static List<Query> AdaptQuery(List<QueryEntity> queryEntityList)
         {

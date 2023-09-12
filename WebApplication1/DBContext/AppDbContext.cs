@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DBEntities;
 using WebApplication1.Interfaces;
+using WebApplication1.Models;
 
 namespace WebApplication1.DBContext
 {
@@ -19,6 +20,15 @@ namespace WebApplication1.DBContext
         {
             return await base.SaveChangesAsync();
         }
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    modelBuilder.Entity<User>().HasData(
+        //        new User 
+        //        { 
+        //            Id = 
+        //        });
+        //}
 
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //{

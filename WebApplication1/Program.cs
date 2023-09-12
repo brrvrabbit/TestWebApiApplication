@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System;
 using WebApplication1.DBContext;
 using WebApplication1.Interfaces;
 using WebApplication1.Models;
@@ -42,9 +43,25 @@ app.MapControllers();
 
 app.MapPost("/report/user_statistics", (QueryParameters queryParameters, IApplicationDbContext db, IQueryService queryService) =>
 {
+    string guid = Guid.NewGuid().ToString();
+    Query query = new()
+    {
+        QueryId = guid,
+        QueryInfo = new()
+        {
+            QueryId = guid,
+        },
+        QueryParameters = queryParameters
+    };
+    queryService.ProcessQueryAsync(query);
+    return Results.Json(guid);
+});
+app.MapGet("/report/info", (string queryGuid, IQueryService queryService) =>
+{
+    var query = queryService.GetQuery(queryGuid);
+    return Results.Json(query.MakeInfoObject());
 
 });
-
 
 
 app.Run();
