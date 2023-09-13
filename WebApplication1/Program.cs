@@ -14,14 +14,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-builder.Services.AddDbContext<AppDbContext>(options => 
-                options.UseSqlite(
-                configuration.GetConnectionString("DefaultConnection"),
-                ef => ef.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+
 
 var options = new DbContextOptionsBuilder<AppDbContext>();
 options.UseSqlite(configuration.GetConnectionString("DefaultConnection"),
                 ef => ef.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlite(configuration.GetConnectionString("DefaultConnection"),
+                ef => ef.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetService<AppDbContext>());
 

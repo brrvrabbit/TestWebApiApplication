@@ -42,17 +42,7 @@ namespace WebApplication1.Services
                 throw new Exception(this.GetType().ToString() + " Exception");
             }
 
-            if(_queriesToProcessList.Count == 0)
-                _queriesToProcessList = AdaptQuery(_applicationDbContext.Queries.Where(q => q.IsDone == false).ToList());
-
         }
-
-        public async Task Worker()
-        {
-            
-        }
-
-
         public async Task ProcessQueryAsync(Query query) //Переделать в возвращающий тип либо сделать сохранение в списке
         {
             await AddQueryToProcessingListAsync(query);
@@ -66,6 +56,9 @@ namespace WebApplication1.Services
             _applicationDbContext.Queries.Add(new()
             {
                 Id = query.QueryId,
+                UserId = query.QueryParameters.UserId,
+                RangeBegin = query.QueryParameters.RangeBegin,
+                RangeEnd = query.QueryParameters.RangeEnd
             });
             await _applicationDbContext.SaveChanges();
 
@@ -82,18 +75,15 @@ namespace WebApplication1.Services
                     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
                     var queryEntity = context.Queries.Where(q => q.Id == query.QueryId).Single();
-                    queryEntity.Result = JsonSerializer.Serialize(query.MakeInfoObject());
+                    queryEntity.Result = JsonSerializer.Serialize(query.QueryInfo.Result, new JsonSerializerOptions { WriteIndented = true })  ;
                     queryEntity.IsDone = true;
                     await context.SaveChanges();
                         
-
                 }
                 catch (Exception ex)
                 {
 
                 }
-                
-                
             }
             else throw new Exception();
         }
@@ -108,7 +98,6 @@ namespace WebApplication1.Services
 
             double millisecondsToProcess = queryInfo.TimeInMillisecondsToProcess;
             double percentStep = updateRate / millisecondsToProcess * 100;
-
 
             while (query.QueryInfo.Percent < 100)
             {
@@ -156,8 +145,17 @@ namespace WebApplication1.Services
         {
             try
             {
-                var query = _queriesToProcessList.Find(q => q.QueryId == queryId);
-                return query;
+                
+                if (_queriesToProcessList.Where(q => q.QueryId == queryId).Any())
+                {
+                    var query = _queriesToProcessList.Where(q => q.QueryId == queryId).Single();
+                    return query;
+                }
+                else
+                {
+                    var query = _applicationDbContext.Queries.Where(q => q.Id == queryId).Single();
+                    return AdaptQuery(query);
+                }
             }
             catch(Exception ex)
             {
@@ -173,7 +171,7 @@ namespace WebApplication1.Services
         {
             return _queriesToProcessList;
         }
-        private static List<Query> AdaptQuery(List<QueryEntity> queryEntityList)
+        private static List<Query> AdaptQueryList(List<QueryEntity> queryEntityList)
         {
             List<Query> queryList = new();
             Query? query;
@@ -182,12 +180,45 @@ namespace WebApplication1.Services
                 query = new()
                 {
                     QueryId = queryEntity.Id,
-                    QueryInfo = new(),
-                    QueryParameters = new(),
+                    QueryInfo = new()
+                    {
+                        Percent = Convert.ToInt32(queryEntity.IsDone) * 100,
+                        Result = JsonSerializer.Deserialize(queryEntity.Result, typeof(object)),
+                        QueryId = queryEntity.Id
+                    },
+                    QueryParameters = new()
+                    {
+                        RangeBegin = queryEntity.RangeBegin,
+                        RangeEnd = queryEntity.RangeEnd,
+                        UserId = queryEntity.UserId
+                    }
                 };
                 queryList.Add(query);
             }
             return queryList;
+        }
+        private static Query AdaptQuery(QueryEntity queryEntity)
+        {
+            Query? query;
+
+            query = new()
+            {
+                QueryId = queryEntity.Id,
+                QueryInfo = new()
+                {
+                    Percent = Convert.ToInt32(queryEntity.IsDone) * 100,
+                    Result = JsonSerializer.Deserialize(queryEntity.Result, typeof(object)),
+                    QueryId = queryEntity.Id
+                },
+                QueryParameters = new()
+                {
+                    RangeBegin = queryEntity.RangeBegin,
+                    RangeEnd = queryEntity.RangeEnd,
+                    UserId = queryEntity.UserId
+                }
+            };
+
+            return query;
         }
     }
 }

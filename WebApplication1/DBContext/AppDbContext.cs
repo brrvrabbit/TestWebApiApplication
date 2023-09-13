@@ -13,7 +13,7 @@ namespace WebApplication1.DBContext
         public AppDbContext (DbContextOptions<AppDbContext> options) : base(options)
         {
             //if(autodelete) Database.EnsureDeleted();
-            //Database.EnsureCreated();
+            Database.EnsureCreated();
         }
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<QueryEntity> Queries { get; set; }
@@ -65,9 +65,9 @@ namespace WebApplication1.DBContext
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //var dummyData = GenerateDummyData();
-            //modelBuilder.Entity<UserEntity>().HasData(dummyData.Item1);
-            //modelBuilder.Entity<VisitStatisticsEntity>().HasData(dummyData.Item2);
+            var dummyData = GenerateDummyData();
+            modelBuilder.Entity<UserEntity>().HasData(dummyData.Item1);
+            modelBuilder.Entity<VisitStatisticsEntity>().HasData(dummyData.Item2);
         }
 
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
