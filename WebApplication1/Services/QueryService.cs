@@ -101,12 +101,8 @@ namespace WebApplication1.Services
 
             while (query.QueryInfo.Percent < 100)
             {
-
                 query.QueryInfo.Percent += (int)percentStep;
-                await Task.Run(async Task () =>
-                {
-                    await Task.Delay(updateRate);
-                });
+                await Task.Delay(updateRate);
             }
             query.QueryInfo.Percent = 100;
         }
@@ -201,24 +197,47 @@ namespace WebApplication1.Services
         {
             Query? query;
 
-            query = new()
+            if(queryEntity.Result != null)
             {
-                QueryId = queryEntity.Id,
-                QueryInfo = new()
+                query = new()
                 {
-                    Percent = Convert.ToInt32(queryEntity.IsDone) * 100,
-                    Result = JsonSerializer.Deserialize(queryEntity.Result, typeof(object)),
-                    QueryId = queryEntity.Id
-                },
-                QueryParameters = new()
-                {
-                    RangeBegin = queryEntity.RangeBegin,
-                    RangeEnd = queryEntity.RangeEnd,
-                    UserId = queryEntity.UserId
-                }
-            };
+                    QueryId = queryEntity.Id,
+                    QueryInfo = new()
+                    {
+                        Percent = Convert.ToInt32(queryEntity.IsDone) * 100,
+                        Result = JsonSerializer.Deserialize(queryEntity.Result, typeof(object)),
+                        QueryId = queryEntity.Id
+                    },
+                    QueryParameters = new()
+                    {
+                        RangeBegin = queryEntity.RangeBegin,
+                        RangeEnd = queryEntity.RangeEnd,
+                        UserId = queryEntity.UserId
+                    }
+                };
 
-            return query;
+                return query;
+            }
+            else
+            {
+                query = new()
+                {
+                    QueryId = queryEntity.Id,
+                    QueryInfo = new()
+                    {
+                        Percent = Convert.ToInt32(queryEntity.IsDone) * 100,
+                        Result = null,
+                        QueryId = queryEntity.Id
+                    },
+                    QueryParameters = new()
+                    {
+                        RangeBegin = queryEntity.RangeBegin,
+                        RangeEnd = queryEntity.RangeEnd,
+                        UserId = queryEntity.UserId
+                    }
+                };
+                return query;
+            }
         }
     }
 }
