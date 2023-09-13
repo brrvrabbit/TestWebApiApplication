@@ -3,6 +3,9 @@ using WebApplication1.Models;
 using WebApplication1.DBEntities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using WebApplication1.DBContext;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApplication1.Services
 {
@@ -10,15 +13,22 @@ namespace WebApplication1.Services
     {
         readonly IApplicationDbContext _applicationDbContext;
         readonly IVisitStatisticsService _visitStatisticsService;
-
+        readonly DbContextOptions<AppDbContext> _options;
+        readonly IServiceScopeFactory _serviceProviderFactory;
         static List<Query> _queriesToProcessList = new();
 
         private int _processingTime = 60000; //Переделать как свойство
 
-        public QueryService(IApplicationDbContext applicationDbContext, IConfiguration config, IVisitStatisticsService visitStatisticsService)
+        public QueryService(IApplicationDbContext applicationDbContext,
+            IServiceScopeFactory serviceProviderFactory,
+            DbContextOptions<AppDbContext> options,
+            IConfiguration config,
+            IVisitStatisticsService visitStatisticsService)
         {
             _applicationDbContext = applicationDbContext;
             _visitStatisticsService = visitStatisticsService;
+            _options = options;
+            _serviceProviderFactory = serviceProviderFactory;
 
             string processingTimeString = config["Query:ProcessingTime"];
             int processingTime = 60000;
@@ -37,15 +47,21 @@ namespace WebApplication1.Services
 
         }
 
+        public async Task Worker()
+        {
+            
+        }
+
+
         public async Task ProcessQueryAsync(Query query) //Переделать в возвращающий тип либо сделать сохранение в списке
         {
-            AddQueryToProcessingList(query);
+            await AddQueryToProcessingListAsync(query);
 
             query.QueryInfo.Result = await ExecuteQueryAsync(query);
             
-            await SaveQueryResult(query);
+            await SaveQueryResultToDbAsync(query);
         }
-        private async Task AddQueryToProcessingList(Query query)
+        private async Task AddQueryToProcessingListAsync(Query query)
         {
             _applicationDbContext.Queries.Add(new()
             {
@@ -56,20 +72,33 @@ namespace WebApplication1.Services
             _queriesToProcessList.Add(query);
         }
 
-        private async Task SaveQueryResult(Query query)
+        private async Task SaveQueryResultToDbAsync(Query query)
         {
             if (query.QueryInfo.Result != null)
             {
-                var queryEntity = _applicationDbContext.Queries.Where(q => q.Id == query.QueryId).Single();
-                queryEntity.Result = JsonSerializer.Serialize(query.MakeInfoObject());
+                try
+                {
+                    await using var scope = _serviceProviderFactory.CreateAsyncScope();
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                queryEntity.IsDone = true;
-                await _applicationDbContext.SaveChanges();
+                    var queryEntity = context.Queries.Where(q => q.Id == query.QueryId).Single();
+                    queryEntity.Result = JsonSerializer.Serialize(query.MakeInfoObject());
+                    queryEntity.IsDone = true;
+                    await context.SaveChanges();
+                        
+
+                }
+                catch (Exception ex)
+                {
+
+                }
+                
+                
             }
             else throw new Exception();
         }
 
-        private async Task HoldQuery(string queryId)
+        private async Task HoldQueryAsync(string queryId)
         {
             int updateRate = 1000;
 
@@ -83,8 +112,12 @@ namespace WebApplication1.Services
 
             while (query.QueryInfo.Percent < 100)
             {
+
                 query.QueryInfo.Percent += (int)percentStep;
-                await Task.Delay(updateRate);
+                await Task.Run(async Task () =>
+                {
+                    await Task.Delay(updateRate);
+                });
             }
             query.QueryInfo.Percent = 100;
         }
@@ -97,7 +130,7 @@ namespace WebApplication1.Services
                 query.QueryInfo.ProcessingStarted = DateTime.Now;
                 query.QueryInfo.ProcessingEndedExpectedTime = query.QueryInfo.ProcessingStarted.AddMilliseconds(_processingTime);
 
-                var TaskHold = HoldQuery(query.QueryId);
+                var TaskHold = HoldQueryAsync(query.QueryId);
                 
                 var visitStatisticsList = await _visitStatisticsService
                     .FindBetweenAsync(query.QueryParameters.RangeBegin, query.QueryParameters.RangeEnd, query.QueryParameters.UserId);
@@ -110,7 +143,7 @@ namespace WebApplication1.Services
 
                 await TaskHold;
 
-                return new
+               return new
                 {
                     UserId = query.QueryParameters.UserId,
                     Count_Sign_In = visitStatisticsList.Count.ToString()
