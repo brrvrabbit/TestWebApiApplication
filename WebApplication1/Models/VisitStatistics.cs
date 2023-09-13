@@ -17,6 +17,7 @@ namespace WebApplication1.Models
             {
                 return new()
                 {
+                    Id = Id,
                     Datetime = Datetime,
                     UserId = UserId
                 };

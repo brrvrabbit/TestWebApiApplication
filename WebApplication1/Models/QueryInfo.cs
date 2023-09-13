@@ -18,11 +18,11 @@ namespace WebApplication1.Models
         [JsonIgnore]
         public DateTime ProcessingEndedExpectedTime { get; set; }
         [JsonIgnore]
-        public int TimeInMillisecondsToProcess  //Пересмотреть или убрать
+        public double TimeInMillisecondsToProcess  //Пересмотреть или убрать
         { 
             get
             { 
-                return ProcessingEndedExpectedTime.Subtract(ProcessingStarted).Milliseconds; 
+                return ProcessingEndedExpectedTime.Subtract(ProcessingStarted).TotalMilliseconds; 
             } 
         }
     }

@@ -24,7 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetService<AppDbContext>());
 
-builder.Services.AddTransient<IQueryService, QueryService>();
+builder.Services.AddScoped<IQueryService, QueryService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IVisitStatisticsService, VisitStatisticsService>();
 

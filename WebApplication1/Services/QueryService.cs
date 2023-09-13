@@ -11,7 +11,7 @@ namespace WebApplication1.Services
         readonly IApplicationDbContext _applicationDbContext;
         readonly IVisitStatisticsService _visitStatisticsService;
 
-        static List<Query> _queriesToProcessList;
+        static List<Query> _queriesToProcessList = new();
 
         private int _processingTime = 60000; //Переделать как свойство
 
@@ -32,7 +32,8 @@ namespace WebApplication1.Services
                 throw new Exception(this.GetType().ToString() + " Exception");
             }
 
-            _queriesToProcessList = AdaptQuery(_applicationDbContext.Queries.Where(q => q.IsDone == false).ToList());
+            if(_queriesToProcessList.Count == 0)
+                _queriesToProcessList = AdaptQuery(_applicationDbContext.Queries.Where(q => q.IsDone == false).ToList());
 
         }
 
@@ -57,10 +58,15 @@ namespace WebApplication1.Services
 
         private async Task SaveQueryResult(Query query)
         {
-            var queryEntity = _applicationDbContext.Queries.Where(q => q.Id == query.QueryId).Single();
-            queryEntity.Result = JsonSerializer.Serialize(query.MakeInfoObject());
-            queryEntity.IsDone = true;
-            await _applicationDbContext.SaveChanges();
+            if (query.QueryInfo.Result != null)
+            {
+                var queryEntity = _applicationDbContext.Queries.Where(q => q.Id == query.QueryId).Single();
+                queryEntity.Result = JsonSerializer.Serialize(query.MakeInfoObject());
+
+                queryEntity.IsDone = true;
+                await _applicationDbContext.SaveChanges();
+            }
+            else throw new Exception();
         }
 
         private async Task HoldQuery(string queryId)
@@ -71,18 +77,16 @@ namespace WebApplication1.Services
 
             var queryInfo = query.QueryInfo;
 
-            int millisecondsToProcess = queryInfo.TimeInMillisecondsToProcess;
-            int percentStep = updateRate / millisecondsToProcess * 100;
+            double millisecondsToProcess = queryInfo.TimeInMillisecondsToProcess;
+            double percentStep = updateRate / millisecondsToProcess * 100;
 
-            await Task.Run(async () =>
+
+            while (query.QueryInfo.Percent < 100)
             {
-                while (query.QueryInfo.Percent < 100)
-                {
-                    query.QueryInfo.Percent += percentStep;
-                    await Task.Delay(updateRate);
-                }
-                query.QueryInfo.Percent = 100;
-            });
+                query.QueryInfo.Percent += (int)percentStep;
+                await Task.Delay(updateRate);
+            }
+            query.QueryInfo.Percent = 100;
         }
 
         private async Task<object> ExecuteQueryAsync(Query query)
