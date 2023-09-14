@@ -6,7 +6,7 @@ namespace WebApplication1.Interfaces
     {
         List<VisitStatistics> GetVisitStatistics();
         Task<List<VisitStatistics>> GetVisitStatisticsAsync();
-        List<VisitStatistics> FindBetween(DateTime start, DateTime end, string userId);
-        Task<List<VisitStatistics>> FindBetweenAsync(DateTime start, DateTime end, string userId);
+        List<VisitStatistics> FindInRange(DateTime start, DateTime end, string userId);
+        Task<List<VisitStatistics>> FindInRangeAsync(DateTime start, DateTime end, string userId);
     }
 }

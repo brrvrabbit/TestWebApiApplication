@@ -66,7 +66,7 @@ app.MapPost("/report/user_statistics", (QueryParameters queryParameters, IApplic
 });
 app.MapGet("/report/info", async (string queryGuid, IQueryService queryService) =>
 {
-    var query = await queryService.GetQuery(queryGuid);
+    var query = await queryService.GetQueryAsync(queryGuid);
     if(query != null)
         return Results.Json(query.MakeInfoObject());
     else return Results.NotFound();

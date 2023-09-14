@@ -1,30 +1,31 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using WebApplication1.DBContext;
 using WebApplication1.DBEntities;
 using WebApplication1.Interfaces;
 using WebApplication1.Models;
 
-namespace WebApplication1.DBContext
+namespace WebApplication1.Tests
 {
-    public class AppDbContext : DbContext, IApplicationDbContext
+    public class TestDbContext : DbContext, IApplicationDbContext
     {
-        public AppDbContext (DbContextOptions<AppDbContext> options) : base(options)
+        public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
-            //if(autodelete) Database.EnsureDeleted();
             Database.EnsureCreated();
         }
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<QueryEntity> Queries { get; set; }
         public DbSet<VisitStatisticsEntity> VisitStatistics { get; set; }
-
-        public new async Task<int> SaveChanges()
+        public async Task<int> SaveChanges()
         {
             return await base.SaveChangesAsync();
         }
-
-        
-        private (List<UserEntity>,List<VisitStatisticsEntity>) GenerateDummyData()
+        public (List<UserEntity>, List<VisitStatisticsEntity>) GenerateDummyData()
         {
             int usersCount = 15,
             minVisit = 1,
@@ -36,7 +37,7 @@ namespace WebApplication1.DBContext
 
             List<VisitStatisticsEntity> visitStatisticsEntities = new();
             VisitStatistics visitStatistics;
-            int id = 1; 
+            int id = 1;
 
             for (int i = 0; i < usersCount; i++)
             {
@@ -46,7 +47,7 @@ namespace WebApplication1.DBContext
                     Id = Guid.NewGuid().ToString(),
                     Username = "user" + r.Next().ToString(),
                 };
-                
+
                 for (int j = 0; j < visitCount; j++)
                 {
                     visitStatistics = new()
@@ -63,20 +64,13 @@ namespace WebApplication1.DBContext
             }
             return (userEntities, visitStatisticsEntities);
         }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            var dummyData = GenerateDummyData();
-            modelBuilder.Entity<UserEntity>().HasData(dummyData.Item1);
-            modelBuilder.Entity<VisitStatisticsEntity>().HasData(dummyData.Item2);
-        }
-
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{
-        //    var connectionStringBuilder = new SqliteConnectionStringBuilder { DataSource = "MyDb.db" };
-        //    var connectionString = connectionStringBuilder.ToString();
-        //    var connection = new SqliteConnection(connectionString);
-
-        //    optionsBuilder.UseSqlite(connection);
+        //    var dummyData = GenerateDummyData();
+        //    modelBuilder.Entity<UserEntity>().HasData(dummyData.Item1);
+        //    modelBuilder.Entity<VisitStatisticsEntity>().HasData(dummyData.Item2);
         //}
+
+       
     }
 }

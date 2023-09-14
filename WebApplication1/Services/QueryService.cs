@@ -13,21 +13,18 @@ namespace WebApplication1.Services
     {
         readonly IApplicationDbContext _applicationDbContext;
         readonly IVisitStatisticsService _visitStatisticsService;
-        readonly DbContextOptions<AppDbContext> _options;
         readonly IServiceScopeFactory _serviceProviderFactory;
         static List<Query> _queriesToProcessList = new();
 
-        private int _processingTime = 60000; //Переделать как свойство
+        private int _processingTime = 60000; 
 
         public QueryService(IApplicationDbContext applicationDbContext,
             IServiceScopeFactory serviceProviderFactory,
-            DbContextOptions<AppDbContext> options,
             IConfiguration config,
             IVisitStatisticsService visitStatisticsService)
         {
             _applicationDbContext = applicationDbContext;
             _visitStatisticsService = visitStatisticsService;
-            _options = options;
             _serviceProviderFactory = serviceProviderFactory;
 
             string processingTimeString = config["Query:ProcessingTime"];
@@ -37,13 +34,8 @@ namespace WebApplication1.Services
             {
                 _processingTime = processingTime;
             }
-            else
-            {
-                throw new Exception(this.GetType().ToString() + " Exception");
-            }
-
         }
-        public async Task ProcessQueryAsync(Query query) //Переделать в возвращающий тип либо сделать сохранение в списке
+        public async Task ProcessQueryAsync(Query query)
         {
             await AddQueryToProcessingListAsync(query);
 
@@ -101,6 +93,7 @@ namespace WebApplication1.Services
 
             while (query.QueryInfo.Percent < 100)
             {
+                if((query.QueryInfo.Percent + (int)percentStep) > 100) { break; }
                 query.QueryInfo.Percent += (int)percentStep;
                 await Task.Delay(updateRate);
             }
@@ -118,7 +111,7 @@ namespace WebApplication1.Services
                 var TaskHold = HoldQueryAsync(query.QueryId);
                 
                 var visitStatisticsList = await _visitStatisticsService
-                    .FindBetweenAsync(query.QueryParameters.RangeBegin, query.QueryParameters.RangeEnd, query.QueryParameters.UserId);
+                    .FindInRangeAsync(query.QueryParameters.RangeBegin, query.QueryParameters.RangeEnd, query.QueryParameters.UserId);
 
                 //query.QueryInfo.Result = new
                 //{
@@ -137,11 +130,10 @@ namespace WebApplication1.Services
             else return null;
         }
         
-        public async Task<Query> GetQuery(string queryId)
+        public async Task<Query> GetQueryAsync(string queryId)
         {
             try
             {
-                
                 if (_queriesToProcessList.Where(q => q.QueryId == queryId).Any())
                 {
                     var query = _queriesToProcessList.Where(q => q.QueryId == queryId).Single();
@@ -163,7 +155,7 @@ namespace WebApplication1.Services
         //{
         //    return _queriesList.Where(q => q.QueryId == queryId).Single();
         //}
-        public async Task<List<Query>> GetQueriesList()
+        public async Task<List<Query>> GetQueriesListAsync()
         {
             return _queriesToProcessList;
         }

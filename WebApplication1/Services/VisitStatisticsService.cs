@@ -18,14 +18,14 @@ namespace WebApplication1.Services
 
         }
 
-        public List<VisitStatistics> FindBetween(DateTime start, DateTime end, string userId)
+        public List<VisitStatistics> FindInRange(DateTime start, DateTime end, string userId)
         {
             return AdaptVisitStatistics(_applicationDbContext.VisitStatistics
                 .Where(v => (v.UserId == userId) && (v.Datetime >= start) && (v.Datetime <= end))
                 .ToList<VisitStatisticsEntity>());
         }
 
-        public async Task<List<VisitStatistics>> FindBetweenAsync(DateTime start, DateTime end, string userId)
+        public async Task<List<VisitStatistics>> FindInRangeAsync(DateTime start, DateTime end, string userId)
         {
             return AdaptVisitStatistics(await _applicationDbContext.VisitStatistics
                 .Where(v => (v.UserId == userId) && (v.Datetime >= start) && (v.Datetime <= end))
