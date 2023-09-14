@@ -15,7 +15,7 @@ namespace WebApplication1.Tests
         {
             //Arrange
             var factory = new ConnectionFactory();
-            var context = factory.CreateContextForInMemory();
+            var context = factory.CreateContextForSQLite();
             var dummyData = context.GenerateDummyData();
             context.Users.AddRange(dummyData.Item1);
             context.VisitStatistics.AddRange(dummyData.Item2);

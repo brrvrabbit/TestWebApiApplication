@@ -30,7 +30,7 @@ namespace WebApplication1.Tests
             configurationMock.Setup(config => config["Query:ProcessingTime"]).Returns(timeToProccess.ToString());
 
             var factory = new ConnectionFactory();
-            var context = factory.CreateContextForInMemory();
+            var context = factory.CreateContextForSQLite();
             var dummyData = context.GenerateDummyData();
             context.Users.AddRange(dummyData.Item1);
             context.VisitStatistics.AddRange(dummyData.Item2);
@@ -83,7 +83,7 @@ namespace WebApplication1.Tests
             configurationMock.Setup(config => config["Query:ProcessingTime"]).Returns(timeToProccess.ToString());
 
             var factory = new ConnectionFactory();
-            var context = factory.CreateContextForInMemory();
+            var context = factory.CreateContextForSQLite();
             var dummyData = context.GenerateDummyData();
             context.Users.AddRange(dummyData.Item1);
             context.VisitStatistics.AddRange(dummyData.Item2);

@@ -20,7 +20,7 @@ namespace WebApplication1.Tests
         {
             //Arrange
             var factory = new ConnectionFactory();
-            var context = factory.CreateContextForInMemory();
+            var context = factory.CreateContextForSQLite();
 
             int usersCount = 10;
             var testUsers = GetTestUserEntities(usersCount);         
