@@ -29,7 +29,7 @@ namespace WebApplication1.Tests
 
             var service = new UserService(context);
             //Act
-            var result = await service.GetUsersAsync();
+            var result = await service.GetUsersListAsync();
 
             //Assert 
             Assert.Equal(testUsers.Count, result.Count);

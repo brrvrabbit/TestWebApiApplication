@@ -74,7 +74,13 @@ app.MapGet("/report/info", async (string queryGuid, IQueryService queryService) 
 
 app.MapGet("/users/", async (IUserService userService) =>
 {
-    return await userService.GetUsersAsync();
+    return await userService.GetUsersListAsync();
+});
+
+app.MapGet("/queries/", async (IQueryService queryService) =>
+{
+    var list = await queryService.GetQueriesListAsync();
+    return list;
 });
 
 app.Run();

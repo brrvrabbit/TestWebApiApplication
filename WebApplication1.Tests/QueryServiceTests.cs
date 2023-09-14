@@ -19,33 +19,6 @@ namespace WebApplication1.Tests
     public class QueryServiceTests
     {
         [Fact]
-        //public async void TryProcessQuery() 
-        //{
-        //    //Arrange
-        //    int timeToProccess = 10000;
-
-        //    var serviceScopeMock = new Mock<IServiceScopeFactory>();
-        //    var configurationMock = new Mock<IConfiguration>();
-        //    configurationMock.Setup(config => config["Query:ProcessingTime"]).Returns(timeToProccess.ToString());
-        //    var visitStatisticsServiceMock = new Mock<IVisitStatisticsService>();
-
-        //    var factory = new ConnectionFactory();
-        //    var context = factory.CreateContextForInMemory();
-        //    var dummyData = context.GenerateDummyData();
-        //    context.Users.AddRange(dummyData.Item1);
-        //    context.VisitStatistics.AddRange(dummyData.Item2);
-
-        //    var queryService = new QueryService(context, serviceScopeMock.Object, configurationMock.Object, visitStatisticsServiceMock.Object);
-
-        //    //Act
-        //    var query = GenerateQuery();
-        //    await queryService.ProcessQueryAsync(query);
-        //    var getQuery = await queryService.GetQueryAsync(query.QueryId);
-
-        //    //Assert
-        //    Assert.Equal(query.QueryId, getQuery.QueryId);
-        //}
-
         public async void GetQueryAsyncTest()
         {
             //Arrange
@@ -97,6 +70,53 @@ namespace WebApplication1.Tests
             Assert.Null(incorrectInputFormatQueryResult);
 
             Assert.Null(nullInputQueryResult);
+        }
+        [Fact]
+        public async void GetQueryListAsyncTest()
+        {
+            //Arrange
+            int timeToProccess = 10000;
+
+            var serviceScopeMock = new Mock<IServiceScopeFactory>();
+
+            var configurationMock = new Mock<IConfiguration>();
+            configurationMock.Setup(config => config["Query:ProcessingTime"]).Returns(timeToProccess.ToString());
+
+            var factory = new ConnectionFactory();
+            var context = factory.CreateContextForInMemory();
+            var dummyData = context.GenerateDummyData();
+            context.Users.AddRange(dummyData.Item1);
+            context.VisitStatistics.AddRange(dummyData.Item2);
+            await context.SaveChanges();
+
+            var query = GenerateQuery();
+            var queryParameters = query.QueryParameters;
+
+            var visitStatisticsEntities = context.VisitStatistics
+                .Where(v => (v.UserId == queryParameters.UserId) && (v.Datetime >= queryParameters.RangeBegin) && (v.Datetime <= queryParameters.RangeEnd))
+                .ToList();
+
+            var visitStatisticsServiceMock = new Mock<IVisitStatisticsService>();
+            visitStatisticsServiceMock.Setup(vs => vs //Настройка метода FindInRange
+                .FindInRangeAsync(queryParameters.RangeBegin, queryParameters.RangeEnd, queryParameters.UserId))
+                .ReturnsAsync(AdaptVisitStatistics(visitStatisticsEntities));
+
+            var queryService = new QueryService(
+                context, serviceScopeMock.Object, configurationMock.Object, visitStatisticsServiceMock.Object);
+
+            Random r = new Random();
+
+            var process = queryService.ProcessQueryAsync(query);
+
+            //Act
+            var queryResultDuringProcess = await queryService.GetQueriesListAsync(); //Подаем правильный guid
+
+            await process;
+
+            var queryResultAfterProcess = await queryService.GetQueriesListAsync();
+            //Assert
+            Assert.NotNull(queryResultDuringProcess);
+            Assert.NotNull(queryResultAfterProcess);
         }
 
         private Query GenerateQuery()

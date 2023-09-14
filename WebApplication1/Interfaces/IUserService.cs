@@ -4,6 +4,6 @@ namespace WebApplication1.Interfaces
 {
     public interface IUserService
     {
-        Task<List<User>> GetUsersAsync();
+        Task<List<User>> GetUsersListAsync();
     }
 }

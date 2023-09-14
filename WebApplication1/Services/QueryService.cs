@@ -1,11 +1,9 @@
 ﻿using WebApplication1.Interfaces;
 using WebApplication1.Models;
 using WebApplication1.DBEntities;
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using WebApplication1.DBContext;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebApplication1.Services
 {
@@ -150,14 +148,25 @@ namespace WebApplication1.Services
                 return null;
             }
         }
-
-        //public async Task<Query> GetQueryAsync(string queryId)
-        //{
-        //    return _queriesList.Where(q => q.QueryId == queryId).Single();
-        //}
         public async Task<List<Query>> GetQueriesListAsync()
         {
-            return _queriesToProcessList;
+            try
+            {
+                if (_queriesToProcessList.Any())
+                {
+                    var list = _queriesToProcessList;
+                    return list;
+                }
+                else
+                {
+                    var list = await _applicationDbContext.Queries.ToListAsync();
+                    return AdaptQueryList(list);
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
         private static List<Query> AdaptQueryList(List<QueryEntity> queryEntityList)
         {

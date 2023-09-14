@@ -11,8 +11,6 @@ namespace WebApplication1.DBContext
     {
         public AppDbContext (DbContextOptions<AppDbContext> options) : base(options)
         {
-            //if(autodelete) Database.EnsureDeleted();
-            Database.EnsureCreated();
         }
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<QueryEntity> Queries { get; set; }
@@ -22,11 +20,16 @@ namespace WebApplication1.DBContext
         {
             return await base.SaveChangesAsync();
         }
-
-        
-        private (List<UserEntity>,List<VisitStatisticsEntity>) GenerateDummyData()
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            int usersCount = 15,
+            var dummyData = GenerateDummyData();
+            modelBuilder.Entity<UserEntity>().HasData(dummyData.Item1);
+            modelBuilder.Entity<VisitStatisticsEntity>().HasData(dummyData.Item2);
+        }
+
+        private (List<UserEntity>, List<VisitStatisticsEntity>) GenerateDummyData()
+        {
+            int usersCount = 10,
             minVisit = 1,
             maxVisit = 5;
             Random r = new Random();
@@ -36,17 +39,17 @@ namespace WebApplication1.DBContext
 
             List<VisitStatisticsEntity> visitStatisticsEntities = new();
             VisitStatistics visitStatistics;
-            int id = 1; 
+            int id = 1;
 
             for (int i = 0; i < usersCount; i++)
             {
-                int visitCount = r.Next(1, 100);
+                int visitCount = r.Next(minVisit, maxVisit);
                 user = new()
                 {
                     Id = Guid.NewGuid().ToString(),
                     Username = "user" + r.Next().ToString(),
                 };
-                
+
                 for (int j = 0; j < visitCount; j++)
                 {
                     visitStatistics = new()
@@ -63,20 +66,6 @@ namespace WebApplication1.DBContext
             }
             return (userEntities, visitStatisticsEntities);
         }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            var dummyData = GenerateDummyData();
-            modelBuilder.Entity<UserEntity>().HasData(dummyData.Item1);
-            modelBuilder.Entity<VisitStatisticsEntity>().HasData(dummyData.Item2);
-        }
 
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    var connectionStringBuilder = new SqliteConnectionStringBuilder { DataSource = "MyDb.db" };
-        //    var connectionString = connectionStringBuilder.ToString();
-        //    var connection = new SqliteConnection(connectionString);
-
-        //    optionsBuilder.UseSqlite(connection);
-        //}
     }
 }

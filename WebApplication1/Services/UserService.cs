@@ -12,7 +12,7 @@ namespace WebApplication1.Services
             _applicationDbContext = applicationDbContext;
         }
 
-        public async Task<List<User>> GetUsersAsync()
+        public async Task<List<User>> GetUsersListAsync()
         {
             return await AdaptUser(_applicationDbContext.Users.ToList());
         }
