@@ -11,6 +11,7 @@ namespace WebApplication1.DBContext
     {
         public AppDbContext (DbContextOptions<AppDbContext> options) : base(options)
         {
+            Database.Migrate();
         }
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<QueryEntity> Queries { get; set; }
